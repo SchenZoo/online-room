@@ -1,6 +1,11 @@
-@import "../../node_modules/toastr/toastr.scss";
+@import '../../node_modules/toastr/toastr.scss';
+@import 'font';
 
 video {
-    width: 400px;
-    height: 300px;
+  width: 400px;
+  height: 300px;
+}
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
 }

@@ -1,0 +1,53 @@
+@mixin setMessageBorderRadius(
+  $prepend,
+  $side,
+  $value,
+  $lowerValue,
+  $unit: null
+) {
+  #{$prepend}.sk-message--1st {
+    .sk-message {
+      &__content {
+        border-bottom-#{$side}-radius: #{$lowerValue}$unit;
+      }
+    }
+  }
+
+  #{$prepend}.sk-message--last {
+    align-items: flex-end;
+    .sk-message {
+      &__content {
+        border-top-#{$side}-radius: #{$lowerValue}$unit;
+      }
+
+      &__avatar-container {
+        display: flex;
+        margin-left: -40px;
+        img {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  #{$prepend}.sk-message.sk-message--1st.sk-message--last {
+    .sk-message {
+      &__content {
+        border-bottom-#{$side}-radius: #{$value}$unit;
+        border-top-#{$side}-radius: #{$value}$unit;
+      }
+    }
+  }
+
+  #{$prepend}.sk-message:not(.sk-message--1st):not(.sk-message--last) {
+    .sk-message {
+      &__content {
+        border-bottom-#{$side}-radius: #{$lowerValue}$unit;
+        border-top-#{$side}-radius: #{$lowerValue}$unit;
+      }
+    }
+  }
+}
