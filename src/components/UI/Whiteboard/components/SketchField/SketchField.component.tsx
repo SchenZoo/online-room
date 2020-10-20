@@ -61,4 +61,12 @@ type Props = Partial<{
   onObjectRotating: (event: Event) => void;
 }>;
 
+export type SketchFieldRef = {
+  undo: () => void;
+  redo: () => void;
+  copy: () => void;
+  paste: () => void;
+  clear: () => void;
+};
+
 export default SField as React.FC<Props>;
