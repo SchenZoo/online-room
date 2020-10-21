@@ -1,9 +1,11 @@
-import { User } from './../models/user';
+import { Participant } from '../models/room';
 import StorageService from './StorageService';
 
 export type AuthBody = {
   token: string;
-  user: User;
+  participant: Participant;
+  isHost: boolean;
+  roomId: string;
 };
 
 export default class CredentialsService {
@@ -22,7 +24,7 @@ export default class CredentialsService {
   }
 
   public static get user() {
-    return StorageService.getItem<AuthBody>(this.STORAGE_KEY)?.user;
+    return StorageService.getItem<AuthBody>(this.STORAGE_KEY)?.participant.user;
   }
 
   public static get token(): string {
@@ -31,5 +33,13 @@ export default class CredentialsService {
 
   public static get userid() {
     return CredentialsService.user?._id;
+  }
+
+  public static get isHost() {
+    return CredentialsService.authBody.isHost;
+  }
+
+  public static get participant() {
+    return CredentialsService.authBody.participant;
   }
 }

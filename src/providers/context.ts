@@ -1,14 +1,17 @@
-import { User } from './../models/user';
-import { Room } from './../models/room';
+import { Participant, Room } from './../models/room';
 import { createContext } from 'react';
 
 type ClassRoomContextProps = {
+  roomId: string;
   room: Room;
-  roomUsers: User[];
+  host: Participant;
+  students: Participant[];
+  participants: Participant[];
 };
 
 export const ClassRoomContext = createContext<Partial<ClassRoomContextProps>>({
-  roomUsers: [],
+  students: [],
+  participants: [],
 });
 
 type ConferenceContextProps = {

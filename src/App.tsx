@@ -1,41 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Router, Route, Switch, Redirect } from 'react-router-dom';
-import { history } from './common/history';
-import ClassRoomPage from './pages/ClassRoomPage';
 import CredentialsService from './services/CredentialsService';
 import api from './api';
-import { SocketService } from './services/SocketService';
 import 'webrtc-adapter';
+import Meet from './pages/Meet';
+import { Loader } from 'semantic-ui-react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [roomId, setRoomId] = useState<string>();
 
   useEffect(() => {
     const init = async () => {
-      const { data } = await api.auth.login({
-        username:localStorage.getItem('username') || 'admin',
-        password:'asdlolasd'
-      });
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      const { data } = await api.auth.loginWithToken(token);
+      setRoomId(data.roomId);
       CredentialsService.saveAuthBody(data);
-      SocketService.connect();
       setIsLoading(false);
     };
     init();
-    return ()=>{
-      SocketService.disconnect();
-    }
   }, [setIsLoading]);
 
-  return isLoading ? (
-    <p>Loading..</p>
-  ) : (
-    <Router history={history}>
-      <Switch>
-        <Route path="/class-room/:roomName" exact component={ClassRoomPage} />
-        <Route path="" exact render={() => <Redirect to="/class-room/maths" />} />
-      </Switch>
-    </Router>
-  );
+  return isLoading ? <Loader active /> : <Meet roomId={roomId} />;
 }
 
 export default App;

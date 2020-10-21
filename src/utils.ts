@@ -54,9 +54,28 @@ function ensureMediaPermissions() {
     });
 }
 
+export function debounce(func: Function, wait: number, isImmediate = false) {
+  let timeout: NodeJS.Timeout | null;
+  return function (...args: any[]) {
+    const later = () => {
+      timeout = null;
+      if (!isImmediate) {
+        func(...args);
+      }
+    };
+    const callNow = isImmediate && !timeout;
+    if (timeout) clearTimeout(timeout);
+    timeout = global.setTimeout(later, wait);
+    if (callNow) {
+      func(...args);
+    }
+  };
+}
+
 export default {
   isTouchDevice,
   parseStringValue,
   ensureMediaPermissions,
   convertFormDataToJSONObject,
+  debounce,
 };

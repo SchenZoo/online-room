@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { ToolName } from '../../enums/Tools';
 const { SketchField: SField } = require('react-sketch');
 
@@ -32,7 +32,7 @@ type Props = Partial<{
   // Sketch width
   width: number;
   // Sketch height
-  height: number;
+  height: string | number;
   // Class name to pass to container div of canvas
   className: string;
   // Style options to pass to container div of canvas
@@ -64,9 +64,17 @@ type Props = Partial<{
 export type SketchFieldRef = {
   undo: () => void;
   redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
   copy: () => void;
   paste: () => void;
   clear: () => void;
+  toJSON: () => object;
 };
 
-export default SField as React.FC<Props>;
+const SketchField: React.ForwardRefRenderFunction<SketchFieldRef, Props> = (
+  props,
+  ref,
+) => <SField ref={ref} {...props} />;
+
+export default forwardRef(SketchField);

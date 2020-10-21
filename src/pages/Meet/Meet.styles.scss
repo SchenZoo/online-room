@@ -1,0 +1,14 @@
+@import '../../scss/settings';
+
+.meet {
+  @include size(100%);
+
+  display: grid;
+  grid-template-rows: 64px 1fr 180px;
+  grid-template-columns: 1fr 320px;
+
+  .whiteboard {
+    grid-row: 2/3;
+    grid-column: 1;
+  }
+}

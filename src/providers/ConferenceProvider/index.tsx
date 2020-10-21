@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ConferenceContext } from '../context';
 import useLocalMedia from '../../hooks/useLocalMedia';
-import { SocketService } from '../../services/SocketService';
-import { SocketEventNames } from '../../enums/SocketEventNames';
 import CredentialsService from '../../services/CredentialsService';
+import p2pSocketService from '../../services/socket/p2pSocketService';
+import SocketEventNames from '../../enums/SocketEventNames';
 
 interface Props {}
 
@@ -17,9 +17,16 @@ const ConferenceProvider: React.FC<Props> = (props) => {
     [key: string]: readonly MediaStream[];
   }>({});
 
-  const { localStream } = useLocalMedia(CredentialsService.userid==='5edcc6e7ff98613025b7f9eb');
+  const { localStream } = useLocalMedia();
 
-  const addNewPeerConnection = useCallback(
+  useEffect(() => {
+    p2pSocketService.connect();
+    return () => {
+      p2pSocketService.disconnect();
+    };
+  });
+
+  const connectNewPeer = useCallback(
     (peerConnection: RTCPeerConnection, key: string) => {
       localStream
         .getTracks()
@@ -32,19 +39,19 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       });
 
       peerConnection.addEventListener('statsended', function (e) {
-        console.log(e)
+        console.log(e);
       });
       peerConnection.addEventListener('icecandidate', (event) => {
         if (event.candidate) {
           console.log('Sending ice candidate');
-          SocketService.sendEvent(SocketEventNames.WEBRTC_SEND_CANDIDATE, {
+          p2pSocketService.sendEvent(SocketEventNames.WEBRTC_SEND_CANDIDATE, {
             candidate: event.candidate,
             candidateSender: CredentialsService.userid,
             candidateReceiver: key,
           });
         }
       });
-      peerConnections[key]= peerConnection;
+      peerConnections[key] = peerConnection;
     },
     [localStream, streams, setStreams],
   );
@@ -52,7 +59,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
   const addPeerConnection = useCallback(
     async (key: string) => {
       const peerConnection = new RTCPeerConnection();
-      addNewPeerConnection(peerConnection, key);
+      connectNewPeer(peerConnection, key);
 
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(
@@ -60,28 +67,25 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       );
 
       console.log('Sending offer');
-      SocketService.sendEvent(SocketEventNames.WEBRTC_SEND_OFFER, {
+      p2pSocketService.sendEvent(SocketEventNames.WEBRTC_SEND_OFFER, {
         offerSender: CredentialsService.userid,
         offerReceiver: key,
         offer,
       });
     },
-    [addNewPeerConnection],
+    [connectNewPeer],
   );
 
-  const removePeerConnection = useCallback(
-    async (key: string) => {
-      const peerConnection = peerConnections[key];
+  const removePeerConnection = useCallback(async (key: string) => {
+    const peerConnection = peerConnections[key];
 
-      if (!peerConnection) {
-        console.error('Trying to close peer connection but it cant be found');
-        return;
-      }
-      peerConnection.close();
-      delete peerConnections[key];
-    },
-    [],
-  );
+    if (!peerConnection) {
+      console.error('Trying to close peer connection but it cant be found');
+      return;
+    }
+    peerConnection.close();
+    delete peerConnections[key];
+  }, []);
 
   useEffect(() => {
     const onOffer = async (data: {
@@ -93,7 +97,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       console.log('Receiving offer');
 
       const peerConnection = new RTCPeerConnection();
-      addNewPeerConnection(peerConnection, offerSender);
+      connectNewPeer(peerConnection, offerSender);
 
       await peerConnection.setRemoteDescription(
         new RTCSessionDescription(offer),
@@ -106,7 +110,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
 
       console.log('Sending answer');
 
-      SocketService.sendEvent(SocketEventNames.WEBRTC_SEND_ANSWER, {
+      p2pSocketService.sendEvent(SocketEventNames.WEBRTC_SEND_ANSWER, {
         answerSender: offerReceiver,
         answerReceiver: offerSender,
         answer,
@@ -147,35 +151,41 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       }
     };
 
-    SocketService.addListener(SocketEventNames.WEBRTC_RECEIVE_OFFER, onOffer);
-    SocketService.addListener(SocketEventNames.WEBRTC_RECEIVE_ANSWER, onAnswer);
-    SocketService.addListener(
+    p2pSocketService.addListener(
+      SocketEventNames.WEBRTC_RECEIVE_OFFER,
+      onOffer,
+    );
+    p2pSocketService.addListener(
+      SocketEventNames.WEBRTC_RECEIVE_ANSWER,
+      onAnswer,
+    );
+    p2pSocketService.addListener(
       SocketEventNames.WEBRTC_RECEIVE_CANDIDATE,
       onCandidate,
     );
     return () => {
-      SocketService.removeListener(
+      p2pSocketService.removeListener(
         SocketEventNames.WEBRTC_RECEIVE_OFFER,
         onOffer,
       );
-      SocketService.removeListener(
+      p2pSocketService.removeListener(
         SocketEventNames.WEBRTC_RECEIVE_ANSWER,
         onAnswer,
       );
-      SocketService.removeListener(
+      p2pSocketService.removeListener(
         SocketEventNames.WEBRTC_RECEIVE_CANDIDATE,
         onCandidate,
       );
     };
-  }, [addNewPeerConnection]);
+  }, [connectNewPeer]);
 
   return (
     <ConferenceContext.Provider
       value={{
+        localStream,
         streams,
         addPeerConnection,
         removePeerConnection,
-        localStream
       }}
     >
       {localStream && children}

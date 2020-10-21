@@ -1,97 +1,118 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { ClassRoomContext, ConferenceContext } from '../context';
-import { Room } from '../../models/room';
-import api from '../../api';
-import { User } from '../../models/user';
-import CredentialsService from '../../services/CredentialsService';
-import { SocketService } from '../../services/SocketService';
-import { SocketEventNames } from '../../enums/SocketEventNames';
+import { Participant, Room } from '../../models/room';
 import toastr from 'toastr';
+import roomSocketService from '../../services/socket/roomSocketService';
+import SocketEventNames from '../../enums/SocketEventNames';
+import { Loader } from 'semantic-ui-react';
 
 interface Props {
-  roomName: string;
+  roomId: string;
 }
 
 const ClassRoomProvider: React.FC<Props> = (props) => {
-  const { children, roomName } = props;
+  const { children, roomId } = props;
   const { addPeerConnection, removePeerConnection } = useContext(
     ConferenceContext,
   );
+
   const [room, setRoom] = useState<Room>();
-  const [roomId, setRoomId] = useState<string>();
-  const [roomUsers, setRoomUsers] = useState<User[]>([]);
+  const [host, setHost] = useState<Participant>();
+  const [students, setStudents] = useState<Participant[]>([]);
+
+  const participants = useMemo(() => [host, ...students], [host, students]);
 
   useEffect(() => {
-    if (roomName) {
+    if (roomId) {
       const loadRoom = async () => {
         try {
-          const { data: room } = await api.rooms.joinRoom(roomName);
+          
+          const { room } = await roomSocketService.connect(roomId);
           setRoom(room);
-          setRoomUsers(room.users);
-          setRoomId(room._id);
+          setHost(room.host);
+          setStudents(room.customers);
         } catch (err) {
-          toastr.error(err.response.data.message);
+          toastr.error(err.message);
           setRoom(null);
         }
       };
       loadRoom();
+
+      return () => {
+        roomSocketService.disconnect();
+      };
     }
-  }, [roomName]);
+  }, [roomId]);
 
   useEffect(() => {
-    const onUserJoinRoom = (data: { roomId: string; user: User }) => {
-      if (
-        roomId === data.roomId &&
-        CredentialsService.userid !== data.user._id
-      ) {
-        console.log('user joined', data);
-        setRoomUsers([...roomUsers, data.user]);
-        addPeerConnection(data.user._id);
-      }
+    const onUserJoinRoom = (data: { participant: Participant }) => {
+      addPeerConnection(data.participant.user._id);
     };
 
     const onUserLeaveRoom = (leftUserId: string) => {
-      if (roomUsers.some((user) => user._id === leftUserId)) {
-        setRoomUsers(
-          roomUsers.filter((roomUser) => roomUser._id !== leftUserId),
-        );
-        removePeerConnection(leftUserId);
-      }
+      removePeerConnection(leftUserId);
     };
-    SocketService.addListener(
-      SocketEventNames.ROOM_USER_JOINED,
+
+    const onParticipantChange = (data: { room: Room }) => {
+      const {
+        room: { customers },
+      } = data;
+      setStudents(customers);
+    };
+
+    const onHostChange = (data: { room: Room }) => {
+      const {
+        room: { host },
+      } = data;
+      setHost(host);
+    };
+
+    roomSocketService.addListener(
+      SocketEventNames.ROOM_PARTICIPANT_JOINED,
       onUserJoinRoom,
     );
-    SocketService.addListener(SocketEventNames.ROOM_USER_LEFT, onUserLeaveRoom);
-    SocketService.addListener(
-      SocketEventNames.USER_DISCONNECTED,
+    roomSocketService.addListener(
+      SocketEventNames.ROOM_PARTICIPANT_LEFT,
       onUserLeaveRoom,
     );
+
+    roomSocketService.addListener(
+      SocketEventNames.ROOM_PARTICIPANT_CHANGED,
+      onParticipantChange,
+    );
+
+    roomSocketService.addListener(
+      SocketEventNames.ROOM_HOST_CHANGED,
+      onHostChange,
+    );
+
     return () => {
-      SocketService.removeListener(
-        SocketEventNames.ROOM_USER_JOINED,
+      roomSocketService.removeListener(
+        SocketEventNames.ROOM_PARTICIPANT_JOINED,
         onUserJoinRoom,
       );
-      SocketService.removeListener(
-        SocketEventNames.ROOM_USER_LEFT,
+      roomSocketService.removeListener(
+        SocketEventNames.ROOM_PARTICIPANT_LEFT,
         onUserLeaveRoom,
       );
-      SocketService.removeListener(
-        SocketEventNames.USER_DISCONNECTED,
-        onUserLeaveRoom,
+
+      roomSocketService.removeListener(
+        SocketEventNames.ROOM_PARTICIPANT_CHANGED,
+        onParticipantChange,
+      );
+
+      roomSocketService.removeListener(
+        SocketEventNames.ROOM_HOST_CHANGED,
+        onHostChange,
       );
     };
-  }, [
-    roomId,
-    roomUsers,
-    setRoomUsers,
-    addPeerConnection,
-    removePeerConnection,
-  ]);
+  }, [roomId, students, setStudents, addPeerConnection, removePeerConnection]);
 
   return (
-    <ClassRoomContext.Provider value={{ room, roomUsers }}>
-      {room === undefined ? 'Loading...' : room && children}
+    <ClassRoomContext.Provider
+      value={{ roomId, room, host, students, participants }}
+    >
+      {room === undefined ? <Loader active /> : room && children}
     </ClassRoomContext.Provider>
   );
 };

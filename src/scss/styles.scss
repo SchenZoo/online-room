@@ -1,5 +1,6 @@
 @import '../../node_modules/toastr/toastr.scss';
 @import 'font';
+@import 'settings';
 
 video {
   width: 400px;
@@ -8,4 +9,73 @@ video {
 
 body {
   font-family: 'Noto Sans TC', sans-serif;
+}
+
+#root {
+  @include size(100%);
+}
+
+button {
+  @include button-reset;
+  user-select: none;
+
+  &:not(.icon) {
+    padding: 10px;
+    line-height: 20px;
+    border-radius: 4px;
+  }
+
+  .icon {
+    @include font-size(12px);
+
+    margin: 0;
+    height: auto;
+  }
+
+  &.icon {
+    @include size(24px);
+
+    display: inline-flex;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &:active {
+    background-color: rgba(234, 234, 234, 0.125);
+  }
+
+  &.primary {
+    background: $color-gray-44;
+    color: white;
+
+    &:not(:disabled):active {
+      background-color: mix(white, $color-gray-44, 15%);
+    }
+  }
+
+  &.danger {
+    background: red;
+    color: white;
+
+    &:not(:disabled):active {
+      background-color: mix(white, red, 15%);
+    }
+  }
+
+  &.active {
+    background: $color-primary;
+
+    &:not(:disabled):active {
+      background-color: mix(white, $color-primary, 15%);
+    }
+  }
+
+  &:not(:disabled) {
+    box-shadow: 1px 1px 5px 0 rgba(gray, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+  }
 }

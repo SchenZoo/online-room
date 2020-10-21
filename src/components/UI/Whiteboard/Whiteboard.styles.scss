@@ -1,0 +1,30 @@
+@import '../../../scss/settings';
+
+.whiteboard {
+  position: relative;
+
+  &,
+  .board {
+    @include size(100%);
+
+    background-color: $color-blackboard;;
+  }
+
+  .tools {
+    @include absolute(top 0 left 0);
+
+    padding: 16px 8px;
+    height: 100%;
+    display: flex;
+    background: white;
+    box-shadow: 2px 0 5px 0 rgba(black, 0.2);
+    flex-direction: column;
+    z-index: 1;
+
+    button {
+      + button {
+        margin-top: 8px;
+      }
+    }
+  }
+}
