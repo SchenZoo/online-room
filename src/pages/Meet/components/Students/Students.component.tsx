@@ -18,11 +18,16 @@ import useCallbackRef from '../../../../hooks/useCallbackRef';
 import utils from '../../../../utils';
 
 import './Students.styles.scss';
-import { ClassRoomContext } from '../../../../providers/context';
+import {
+  ClassRoomContext,
+  ConferenceContext,
+} from '../../../../providers/context';
+import VideoTrack from '../../../../components/conference/VideoTrack';
 
 type Props = {};
 const Students: React.FC<Props> = () => {
   const { students, roomId } = useContext(ClassRoomContext);
+  const { streams, localStream } = useContext(ConferenceContext);
   const { isHost, participant: currentParticipant } = CredentialsService;
   const [participantsEl, participantsRef] = useCallbackRef<HTMLDivElement>();
 
@@ -74,7 +79,18 @@ const Students: React.FC<Props> = () => {
   const classes = classNames(['students']);
 
   const joinedParticipants = useMemo(
-    () => students.filter((p) => p.hasJoined),
+    () =>
+      students
+        .filter((p) => p.hasJoined)
+        .sort((p1, p2) => {
+          // if p1 is current or he raised hand he has lower index so it returns -1
+          if (p1.user._id === CredentialsService.userid || p1.hasControl)
+            return -1;
+          // if p2 is current or he raised hand he has lower index so must returns 1
+          if (p2.user._id === CredentialsService.userid || p2.hasControl)
+            return 1;
+          return 0;
+        }),
     [students],
   );
 
@@ -137,7 +153,7 @@ const Students: React.FC<Props> = () => {
               --flexWidth: ${width}px;
           }`}
           </style>
-          {joinedParticipants.map((student, ind) => (
+          {joinedParticipants.map((participant, ind) => (
             <div className="student__item" key={ind}>
               {isHost && (
                 <Dropdown
@@ -156,13 +172,15 @@ const Students: React.FC<Props> = () => {
                   </Dropdown.Menu>
                 </Dropdown>
               )}
-              {/* <UserCamera
-                experienceParticipant={student}
-                showStreamControls={
-                  isHost || CredentialsService.participantId === student._id
+              <VideoTrack
+                currentParticipant={participant}
+                isLocal={participant.user._id === currentParticipant.user._id}
+                stream={
+                  participant.user._id === currentParticipant.user._id
+                    ? localStream
+                    : streams[participant.user._id]?.[0]
                 }
-                userType="student"
-              /> */}
+              />
             </div>
           ))}
         </div>

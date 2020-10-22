@@ -19,12 +19,26 @@ type ConferenceContextProps = {
     [key: string]: readonly MediaStream[];
   };
   localStream?: MediaStream;
+  isAudioEnabled: boolean;
+  isVideoEnabled: boolean;
+  isAudioAvailable: boolean;
+  isVideoAvailable: boolean;
+
   addPeerConnection: (key: string) => void;
   removePeerConnection: (key: string) => void;
+  setIsAudioEnabled: (value: boolean) => void;
+  setIsVideoEnabled: (value: boolean) => void;
 };
 
 export const ConferenceContext = createContext<ConferenceContextProps>({
   streams: {},
+  isAudioEnabled: false,
+  isVideoEnabled: false,
+  isAudioAvailable: false,
+  isVideoAvailable: false,
+
   addPeerConnection: () => {},
   removePeerConnection: () => {},
+  setIsAudioEnabled: (value: boolean) => {},
+  setIsVideoEnabled: (value: boolean) => {},
 });

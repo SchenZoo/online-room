@@ -21,6 +21,10 @@ function connect(this: SocketService, roomId: string): Promise<{ room: Room }> {
       }
     });
 
+    this.socket.on(SocketEventNames.AUTHORIZED, () => {
+      this.sendEvent(SocketEventNames.ROOM_PARTICIPANT_JOIN, roomId);
+    });
+
     this.socket.on('disconnect', () => {
       console.error('Client disconnected');
       reject({
@@ -39,8 +43,6 @@ function connect(this: SocketService, roomId: string): Promise<{ room: Room }> {
         resolve(data);
       },
     );
-
-    this.socket.emit(SocketEventNames.ROOM_PARTICIPANT_JOIN, roomId);
   });
 }
 

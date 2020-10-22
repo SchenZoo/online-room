@@ -17,36 +17,38 @@ const StreamControls = (props: StreamControlProps) => {
   const {
     isAudioEnabled,
     isVideoEnabled,
-    disableMicControl,
+    disableMicControl = false,
     disableMicControlReason,
-    disableVideoControl,
+    disableVideoControl = false,
     disableVideoControlReason,
+    toggleMicEnabled,
+    toggleVideoEnabled,
   } = props;
 
   const micButton = useMemo(
     () => (
       <button
         onClick={(ev) => {
-          // if (!disableMicControl) toggleMicEnabled(ev);
+          if (!disableMicControl) toggleMicEnabled(ev);
         }}
       >
         <MicrophoneIcon crossed={!isAudioEnabled} />
       </button>
     ),
-    [isAudioEnabled],
+    [disableMicControl, isAudioEnabled, toggleMicEnabled],
   );
 
   const cameraButton = useMemo(
     () => (
       <button
         onClick={(ev) => {
-          // if (!disableVideoControl) toggleVideoEnabled(ev);
+          if (!disableVideoControl) toggleVideoEnabled(ev);
         }}
       >
         <CameraIcon crossed={!isVideoEnabled} />
       </button>
     ),
-    [isVideoEnabled],
+    [disableVideoControl, isVideoEnabled, toggleVideoEnabled],
   );
 
   const micButtonFinal = useMemo(() => {

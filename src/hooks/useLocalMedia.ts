@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 
-export default function useLocalMedia() {
+export default function useLocalMedia(
+  isAudioEnabled: boolean,
+  isVideoEnabled: boolean,
+) {
   const [localVideoTrack, setVideoTrack] = useState<MediaStreamTrack>();
   const [localAudioTrack, setAudioTrack] = useState<MediaStreamTrack>();
   const [localTracks, setTracks] = useState<MediaStreamTrack[]>();
   const [localStream, setStream] = useState<MediaStream>();
+  const [isMediaLoaded, setIsMediaLoaded] = useState<boolean>(false);
 
   const getLocalStream = useCallback(async () => {
     const defaultVideoOptions: MediaTrackConstraints = {
@@ -20,30 +24,54 @@ export default function useLocalMedia() {
 
     return media
       .then((mediaStream) => {
-        setVideoTrack(mediaStream.getVideoTracks()[0]);
-        setAudioTrack(mediaStream.getAudioTracks()[0]);
+        const videoTrack = mediaStream.getVideoTracks()[0];
+        const audioTrack = mediaStream.getAudioTracks()[0];
+
+        setVideoTrack(videoTrack);
+        setAudioTrack(audioTrack);
+
         setTracks(mediaStream.getTracks());
         setStream(mediaStream);
       })
       .catch((err) => {
         console.log(err);
         return null;
+      })
+      .then(() => {
+        if (!isMediaLoaded) {
+          setIsMediaLoaded(true);
+        }
       });
-  }, []);
+  }, [isMediaLoaded]);
 
   useEffect(() => {
     getLocalStream();
-  }, [getLocalStream]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    if (localTracks) {
-      // :TODO emit to stop peer connection and display
-      const handleStopped = () => console.log('track stopped');
-      localTracks.forEach((track) => {
-        track.onended = handleStopped;
-      });
+    if (localAudioTrack) {
+      localAudioTrack.enabled = isAudioEnabled;
     }
-  }, [localTracks]);
+  }, [localAudioTrack, isAudioEnabled]);
 
-  return { localTracks, localVideoTrack, localAudioTrack, localStream };
+  useEffect(() => {
+    if (localVideoTrack) {
+      console.log(isVideoEnabled);
+      localVideoTrack.enabled = isVideoEnabled;
+    }
+  }, [localVideoTrack, isVideoEnabled]);
+
+  const isAudioAvailable = useMemo(() => !!localAudioTrack, [localAudioTrack]);
+  const isVideoAvailable = useMemo(() => !!localVideoTrack, [localVideoTrack]);
+
+  return {
+    localTracks,
+    localVideoTrack,
+    localAudioTrack,
+    localStream,
+    isMediaLoaded,
+    isAudioAvailable,
+    isVideoAvailable,
+  };
 }

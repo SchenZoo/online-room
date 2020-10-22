@@ -23,7 +23,7 @@ function connect(this: SocketService): Promise<void> {
     this.socket.on('disconnect', () => {
       console.error('Client disconnected');
       reject({
-        message: 'Not authorized to join class',
+        message: 'Not authorized to join p2p',
       });
     });
 

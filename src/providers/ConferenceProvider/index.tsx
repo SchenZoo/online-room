@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { ConferenceContext } from '../context';
 import useLocalMedia from '../../hooks/useLocalMedia';
 import CredentialsService from '../../services/CredentialsService';
@@ -7,34 +7,40 @@ import SocketEventNames from '../../enums/SocketEventNames';
 
 interface Props {}
 
-const peerConnections: {
-  [key: string]: RTCPeerConnection;
-} = {};
-
 const ConferenceProvider: React.FC<Props> = (props) => {
   const { children } = props;
   const [streams, setStreams] = useState<{
     [key: string]: readonly MediaStream[];
   }>({});
+  const peerConnections = useRef<Record<string, RTCPeerConnection>>({});
+  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
 
-  const { localStream } = useLocalMedia();
+  const {
+    localStream,
+    isMediaLoaded,
+    isAudioAvailable,
+    isVideoAvailable,
+  } = useLocalMedia(isAudioEnabled, isVideoEnabled);
 
   useEffect(() => {
+    if (!isMediaLoaded) return;
     p2pSocketService.connect();
     return () => {
       p2pSocketService.disconnect();
     };
-  });
+  }, [isMediaLoaded]);
 
   const connectNewPeer = useCallback(
     (peerConnection: RTCPeerConnection, key: string) => {
       localStream
-        .getTracks()
+        ?.getTracks()
         .forEach((track) => peerConnection.addTrack(track, localStream));
 
       peerConnection.addEventListener('track', function ({
         streams: peerStreams,
       }) {
+        console.log('Received track');
         setStreams({ ...streams, [key]: peerStreams });
       });
 
@@ -51,7 +57,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
           });
         }
       });
-      peerConnections[key] = peerConnection;
+      peerConnections.current[key] = peerConnection;
     },
     [localStream, streams, setStreams],
   );
@@ -77,17 +83,19 @@ const ConferenceProvider: React.FC<Props> = (props) => {
   );
 
   const removePeerConnection = useCallback(async (key: string) => {
-    const peerConnection = peerConnections[key];
+    const peerConnection = peerConnections.current[key];
 
     if (!peerConnection) {
       console.error('Trying to close peer connection but it cant be found');
       return;
     }
     peerConnection.close();
-    delete peerConnections[key];
+    delete peerConnections.current[key];
   }, []);
 
   useEffect(() => {
+    if (!isMediaLoaded) return;
+
     const onOffer = async (data: {
       offer: RTCSessionDescriptionInit;
       offerReceiver: string;
@@ -124,7 +132,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       const { answer, answerSender } = data;
       console.log('Receiving answer');
 
-      const peerConnection = peerConnections[answerSender];
+      const peerConnection = peerConnections.current[answerSender];
 
       if (!peerConnection) {
         console.error('Answer came but no connection is made on this side');
@@ -141,9 +149,9 @@ const ConferenceProvider: React.FC<Props> = (props) => {
       candidateReceiver: string;
     }) => {
       const { candidate, candidateSender } = data;
-      if (peerConnections[candidateSender]) {
+      if (peerConnections.current[candidateSender]) {
         console.log('Receiving ice candidate');
-        peerConnections[candidateSender].addIceCandidate(
+        peerConnections.current[candidateSender].addIceCandidate(
           new RTCIceCandidate(candidate),
         );
       } else {
@@ -177,7 +185,7 @@ const ConferenceProvider: React.FC<Props> = (props) => {
         onCandidate,
       );
     };
-  }, [connectNewPeer]);
+  }, [connectNewPeer, isMediaLoaded]);
 
   return (
     <ConferenceContext.Provider
@@ -186,9 +194,17 @@ const ConferenceProvider: React.FC<Props> = (props) => {
         streams,
         addPeerConnection,
         removePeerConnection,
+        isAudioAvailable,
+        isVideoAvailable,
+        isAudioEnabled,
+        isVideoEnabled,
+        setIsAudioEnabled,
+        setIsVideoEnabled,
       }}
     >
-      {localStream && children}
+      <p>{!isAudioAvailable && 'Audio isnt enabled'}</p>
+      <p>{!isVideoAvailable && 'Video isnt enabled'}</p>
+      {isMediaLoaded && children}
     </ConferenceContext.Provider>
   );
 };

@@ -5,6 +5,7 @@ import toastr from 'toastr';
 import roomSocketService from '../../services/socket/roomSocketService';
 import SocketEventNames from '../../enums/SocketEventNames';
 import { Loader } from 'semantic-ui-react';
+import CredentialsService from '../../services/CredentialsService';
 
 interface Props {
   roomId: string;
@@ -12,9 +13,12 @@ interface Props {
 
 const ClassRoomProvider: React.FC<Props> = (props) => {
   const { children, roomId } = props;
-  const { addPeerConnection, removePeerConnection } = useContext(
-    ConferenceContext,
-  );
+  const {
+    addPeerConnection,
+    removePeerConnection,
+    setIsVideoEnabled,
+    setIsAudioEnabled,
+  } = useContext(ConferenceContext);
 
   const [room, setRoom] = useState<Room>();
   const [host, setHost] = useState<Participant>();
@@ -22,15 +26,34 @@ const ClassRoomProvider: React.FC<Props> = (props) => {
 
   const participants = useMemo(() => [host, ...students], [host, students]);
 
+  const currentStudent = useMemo(
+    () =>
+      students.find(
+        (student) => student.user._id === CredentialsService.userid,
+      ),
+    [students],
+  );
+
+  useEffect(() => {
+    if (CredentialsService.isHost) {
+      setIsAudioEnabled(true);
+      setIsVideoEnabled(true);
+    } else {
+      if (currentStudent) {
+        setIsVideoEnabled(currentStudent.isVideoEnabled);
+        setIsAudioEnabled(currentStudent.isAudioEnabled);
+      }
+    }
+  }, [currentStudent, setIsAudioEnabled, setIsVideoEnabled]);
+
   useEffect(() => {
     if (roomId) {
       const loadRoom = async () => {
         try {
-          
           const { room } = await roomSocketService.connect(roomId);
-          setRoom(room);
           setHost(room.host);
           setStudents(room.customers);
+          setRoom(room);
         } catch (err) {
           toastr.error(err.message);
           setRoom(null);

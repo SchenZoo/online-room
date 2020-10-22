@@ -1,28 +1,3 @@
-// import React, { useEffect } from 'react';
-// import useCallbackRef from '../../../hooks/useCallbackRef';
-
-// export type LocalVideoProps = {
-//   stream?: MediaStream;
-// };
-
-// const VideoTrack: React.FC<LocalVideoProps> = (props) => {
-//   const { stream } = props;
-//   const [videoRef, setVideoRef] = useCallbackRef<HTMLVideoElement>();
-
-//   useEffect(() => {
-//     if (videoRef && stream) {
-//       videoRef.srcObject = stream;
-//     }
-//   }, [videoRef, stream]);
-//   return stream ? (
-//     <video autoPlay muted ref={setVideoRef}></video>
-//   ) : (
-//     <p>User has no media</p>
-//   );
-// };
-
-// export default VideoTrack;
-
 import React, { useEffect, useMemo, useContext, useRef } from 'react';
 import './VideoTrack.styles.scss';
 import classNames from 'classnames';
@@ -32,42 +7,66 @@ import CredentialsService from '../../../services/CredentialsService';
 import { ClassRoomContext } from '../../../providers/context';
 import toastr from 'toastr';
 import { Participant } from '../../../models/room';
+import useCallbackRef from '../../../hooks/useCallbackRef';
+import api from '../../../api';
 
 interface VideoTrackProps {
-  isLocal: boolean;
   currentParticipant: Participant;
   stream: MediaStream;
-  hasAudio?: boolean;
-  hasVideo?: boolean;
+  isLocal: boolean;
 }
 
-export type VideoTrackRef = {
-  setIsVideoFullScreen: (value: boolean) => void;
-};
-
-const VideoTrack: React.RefForwardingComponent<
-  VideoTrackRef,
-  VideoTrackProps
-> = ({
+const VideoTrack: React.FC<VideoTrackProps> = ({
   stream,
   currentParticipant,
   isLocal,
-  hasAudio = true,
-  hasVideo = true,
 }) => {
   const { roomId } = useContext(ClassRoomContext);
   const { isHost } = CredentialsService;
   const lastAudioEnabled = useRef(currentParticipant.isAudioEnabled);
+  const [audioRef, setAudioRef] = useCallbackRef<HTMLVideoElement>();
+  const [videoRef, setVideoRef] = useCallbackRef<HTMLVideoElement>();
+
+  const audioStream = useMemo(() => {
+    if (!stream || currentParticipant.isAudioEnabled === false) return null;
+    const clonedStream = stream.clone();
+    clonedStream.getVideoTracks().forEach((videoTrack) => {
+      clonedStream.removeTrack(videoTrack);
+    });
+    return clonedStream;
+  }, [stream, currentParticipant]);
+
+  const videoStream = useMemo(() => {
+    if (!stream || currentParticipant.isVideoEnabled === false) return null;
+    const clonedStream = stream.clone();
+    clonedStream.getAudioTracks().forEach((audioTrack) => {
+      clonedStream.removeTrack(audioTrack);
+    });
+    return clonedStream;
+  }, [stream, currentParticipant]);
 
   useEffect(() => {
-    if (isHost || !isLocal) return;
-    if (currentParticipant.isAudioEnabled !== lastAudioEnabled.current) {
-      lastAudioEnabled.current = currentParticipant.isAudioEnabled;
-      if (currentParticipant.isAudioEnabled) {
-        toastr.info('You now have control.');
-      }
+    if (videoRef && videoStream) {
+      videoRef.srcObject = videoStream;
     }
-  }, [isHost, isLocal, currentParticipant]);
+  }, [videoRef, videoStream]);
+
+  useEffect(() => {
+    if (audioRef && audioStream) {
+      audioRef.srcObject = audioStream;
+    }
+  }, [audioRef, audioStream]);
+
+  // TODO when participant gets controll show him
+  // useEffect(() => {
+  //   if (isHost || !isLocal) return;
+  //   if (currentParticipant.isAudioEnabled !== lastAudioEnabled.current) {
+  //     lastAudioEnabled.current = currentParticipant.isAudioEnabled;
+  //     if (currentParticipant.isAudioEnabled) {
+  //       toastr.info('You now have control.');
+  //     }
+  //   }
+  // }, [isHost, isLocal, currentParticipant]);
 
   const style = useMemo(() => {
     return isLocal
@@ -81,7 +80,7 @@ const VideoTrack: React.RefForwardingComponent<
   }, [isLocal]);
 
   const showControls = useMemo(() => {
-    return isLocal || isHost;
+    return isLocal !== isHost;
   }, [isLocal, isHost]);
 
   const controls = useMemo(() => {
@@ -96,62 +95,58 @@ const VideoTrack: React.RefForwardingComponent<
           updateBody.hasControl = false;
         }
 
-        // api.experience.participants.edit(
-        //   roomId,
-        //   currentParticipant._id,
-        //   updateBody,
-        // );
+        api.rooms.updateRoomsCustomer(
+          roomId,
+          currentParticipant.user._id,
+          updateBody,
+        );
       };
 
       const toggleVideoEnabled = () => {
-        // api.experience.participants.edit(
-        //   roomId,
-        //   currentParticipant._id,
-        //   { isVideoEnabled: !currentParticipant.isVideoEnabled },
-        // );
+        api.rooms.updateRoomsCustomer(roomId, currentParticipant.user._id, {
+          isVideoEnabled: !currentParticipant.isVideoEnabled,
+        });
       };
 
-      const safeExperienceParticipant = currentParticipant || {
-        isAudioEnabled: false,
+      const safeExperienceParticipant = {
+        isAudioEnabled: true,
         isVideoEnabled: true,
         hasControl: false,
+        ...currentParticipant,
       };
 
-      streamControlProps = isHost
-        ? !isLocal && {
-            toggleMicEnabled,
-            toggleVideoEnabled,
-            isVideoEnabled: hasVideo,
-            isAudioEnabled: hasAudio,
-            disableVideoControl:
-              !hasVideo && safeExperienceParticipant.isVideoEnabled,
-            disableVideoControlReason: !safeExperienceParticipant.isVideoEnabled
-              ? 'You disabled camera.'
-              : 'User turned off the camera himself you cannot activate it.',
-            disableMicControl:
-              !hasAudio && !safeExperienceParticipant.hasControl,
-            disableMicControlReason: !safeExperienceParticipant.hasControl
-              ? 'User must raise hand before you enable his mic.'
-              : 'User muted himself you cannot unmute him.',
-          }
-        : isLocal && {
-            isAudioEnabled: hasAudio,
-            isVideoEnabled: hasVideo,
-            disableVideoControl: !safeExperienceParticipant.isVideoEnabled,
-            disableVideoControlReason: 'Host turned off your camera.',
-            disableMicControl: !safeExperienceParticipant.isAudioEnabled,
-            disableMicControlReason: 'Raise a hand to get a word',
-          };
+      streamControlProps = {
+        isVideoEnabled: safeExperienceParticipant.isVideoEnabled,
+        isAudioEnabled: safeExperienceParticipant.isAudioEnabled,
+      };
+
+      if (isHost) {
+        if (!isLocal) {
+          streamControlProps.toggleMicEnabled = toggleMicEnabled;
+          streamControlProps.toggleVideoEnabled = toggleVideoEnabled;
+        }
+      } else {
+        if (isLocal) {
+          streamControlProps.disableVideoControl = true;
+          streamControlProps.disableVideoControlReason =
+            'Host can control your camera.';
+          streamControlProps.disableMicControl = true;
+          streamControlProps.disableMicControlReason =
+            'Raise a hand when host asks to get chance to talk';
+        }
+      }
     }
+
     return (
       <div className="stream-controls">
         {showControls && <StreamControls {...streamControlProps} />}
       </div>
     );
-  }, [showControls, isLocal, hasVideo, hasAudio, currentParticipant, isHost]);
+  }, [showControls, isLocal, currentParticipant, isHost, roomId]);
 
   const participantStatus = useMemo(() => {
     if (!currentParticipant) return 'muted';
+    return 'muted';
     if (currentParticipant.isAudioEnabled) {
       return 'talking';
     }
@@ -180,10 +175,18 @@ const VideoTrack: React.RefForwardingComponent<
   return (
     <div className={wrapperClasses}>
       <style>{style}</style>
-      {stream && hasVideo ? (
-        <video className={videoClasses} poster="/assets/gifs/loading.gif" />
+      {!isLocal && audioStream && (
+        <video autoPlay style={{ display: 'none' }} ref={setAudioRef} />
+      )}
+      {videoStream ? (
+        <video
+          autoPlay
+          ref={setVideoRef}
+          className={videoClasses}
+          poster="/assets/gifs/loading.gif"
+        />
       ) : (
-        <img src="/assets/images/logo.png" alt={'customer4'} />
+        <img alt={'Camera off'} />
       )}
       {controls}
     </div>

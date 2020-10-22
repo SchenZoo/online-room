@@ -1,8 +1,8 @@
 import React from 'react';
-import LocalVideo from '../../components/conference/LocalVideo';
 import ClassRoomProvider from '../../providers/ClassRoomProvider';
 import ConferenceProvider from '../../providers/ConferenceProvider';
 import Students from './components/Students';
+import Host from './components/Host';
 import './Meet.styles.scss';
 
 interface Props {
@@ -15,7 +15,7 @@ const MeetPage = (props: Props) => {
       <ClassRoomProvider {...props}>
         <div className="meet">
           {/* <Whiteboard /> */}
-          <LocalVideo />
+          <Host />
           <Students />
         </div>
       </ClassRoomProvider>
