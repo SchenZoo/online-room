@@ -21,7 +21,6 @@ import {
   ConferenceContext,
 } from '../../../../providers/context';
 import VideoTrack from '../../../../components/conference/VideoTrack';
-import { Participant } from '../../../../models/room';
 import api from 'api';
 
 type Props = {};
@@ -30,9 +29,10 @@ const Students: React.FC<Props> = () => {
     students,
     roomId,
     room: { allowOvertaking },
+    currentStudent: currentParticipant,
   } = useContext(ClassRoomContext);
   const { streams, localStream } = useContext(ConferenceContext);
-  const { isHost, participant: currentParticipant } = CredentialsService;
+  const { isHost } = CredentialsService;
   const [participantsEl, participantsRef] = useCallbackRef<HTMLDivElement>();
 
   const [width, setMaxWidth] = useState(0);
@@ -90,7 +90,7 @@ const Students: React.FC<Props> = () => {
 
   useEffect(() => {
     setShowRaisedHands(
-      isHost ? allowOvertaking : !currentParticipant.hasRequestedControl,
+      isHost ? !allowOvertaking : !currentParticipant?.hasRequestedControl,
     );
   }, [isHost, allowOvertaking, currentParticipant]);
 
@@ -100,9 +100,9 @@ const Students: React.FC<Props> = () => {
         allowOvertaking: !allowOvertaking,
       });
     } else {
-      api.rooms.takeControl(roomId, !currentParticipant.hasControl);
+      api.rooms.takeControl(roomId, !currentParticipant?.hasControl);
     }
-  }, [isHost, roomId, allowOvertaking, currentParticipant.hasControl]);
+  }, [isHost, roomId, allowOvertaking, currentParticipant]);
 
   return (
     <>

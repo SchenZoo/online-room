@@ -18,7 +18,7 @@ const updateRoom = (roomId: string, patch: Partial<Room>) => {
 };
 
 const takeControl = (roomId: string, takeControl: boolean) => {
-  return HttpClient.post(`rooms/${roomId}/customers/take-control`, {
+  return HttpClient.patch(`rooms/${roomId}/customers/control`, {
     takeControl,
   });
 };

@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useContext, useRef } from 'react';
+import React, { useEffect, useMemo, useContext } from 'react';
 import './VideoTrack.styles.scss';
 import classNames from 'classnames';
 import StreamControls from './components/StreamControls';
 import { StreamControlProps } from './components/StreamControls/StreamControls.component';
 import CredentialsService from '../../../services/CredentialsService';
 import { ClassRoomContext } from '../../../providers/context';
-import toastr from 'toastr';
 import { Participant } from '../../../models/room';
 import useCallbackRef from '../../../hooks/useCallbackRef';
 import api from '../../../api';
@@ -25,8 +24,7 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
 }) => {
   const { roomId } = useContext(ClassRoomContext);
   const { isHost } = CredentialsService;
-  const lastAudioEnabled = useRef(currentParticipant?.isAudioEnabled);
-  const [audioRef, setAudioRef] = useCallbackRef<HTMLVideoElement>();
+  // const lastAudioEnabled = useRef(currentParticipant?.isAudioEnabled);
   const [videoRef, setVideoRef] = useCallbackRef<HTMLVideoElement>();
   const { user: { name } = { name: 'Some name' } } = currentParticipant || {};
 
@@ -35,46 +33,12 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
     [name, userType],
   );
 
-  const audioStream = useMemo(() => {
-    if (!stream || currentParticipant.isAudioEnabled === false) return null;
-    const clonedStream = stream.clone();
-    clonedStream.getVideoTracks().forEach((videoTrack) => {
-      clonedStream.removeTrack(videoTrack);
-    });
-    return clonedStream;
-  }, [stream, currentParticipant]);
-
-  const videoStream = useMemo(() => {
-    if (!stream || currentParticipant.isVideoEnabled === false) return null;
-    const clonedStream = stream.clone();
-    clonedStream.getAudioTracks().forEach((audioTrack) => {
-      clonedStream.removeTrack(audioTrack);
-    });
-    return clonedStream;
-  }, [stream, currentParticipant]);
-
   useEffect(() => {
-    if (videoRef && videoStream) {
-      videoRef.srcObject = videoStream;
+    if (videoRef && stream) {
+      videoRef.srcObject = stream;
+      videoRef.muted = isLocal;
     }
-  }, [videoRef, videoStream]);
-
-  useEffect(() => {
-    if (audioRef && audioStream) {
-      audioRef.srcObject = audioStream;
-    }
-  }, [audioRef, audioStream]);
-
-  // TODO when participant gets controll show him
-  // useEffect(() => {
-  //   if (isHost || !isLocal) return;
-  //   if (currentParticipant.isAudioEnabled !== lastAudioEnabled.current) {
-  //     lastAudioEnabled.current = currentParticipant.isAudioEnabled;
-  //     if (currentParticipant.isAudioEnabled) {
-  //       toastr.info('You now have control.');
-  //     }
-  //   }
-  // }, [isHost, isLocal, currentParticipant]);
+  }, [videoRef, stream, isLocal]);
 
   const style = useMemo(() => {
     return isLocal
@@ -190,18 +154,14 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
   return (
     <div className={wrapperClasses}>
       <style>{style}</style>
-      {!isLocal && audioStream && (
-        <video autoPlay style={{ display: 'none' }} ref={setAudioRef} />
-      )}
-      {videoStream ? (
+      {stream && (
         <video
-          autoPlay
+          autoPlay={true}
+          muted={isLocal}
           ref={setVideoRef}
           className={videoClasses}
           poster="/assets/gifs/loading.gif"
         />
-      ) : (
-        <img src="/assets/images/logo.png" alt={'Camera off'} />
       )}
       {controls}
     </div>

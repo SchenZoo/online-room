@@ -22,7 +22,7 @@ export type WhiteboardState = {
 type Props = {};
 
 const Whiteboard: React.FC<Props> = () => {
-  const { roomId } = useContext(ClassRoomContext);
+  const { roomId, currentStudent } = useContext(ClassRoomContext);
   const [board, boardRef] = useCallbackRef<SketchFieldRef>();
   const [canUndo, setCanUndo] = useState<boolean>();
   const [canRedo, setCanRedo] = useState<boolean>();
@@ -100,8 +100,10 @@ const Whiteboard: React.FC<Props> = () => {
 
     if (prevUndo !== board.canUndo()) setCanUndo(board.canUndo());
     if (prevRedo !== board.canRedo()) setCanRedo(board.canRedo());
-    emitWhiteboardChanges(board.toJSON());
-  }, [canUndo, canRedo, board, emitWhiteboardChanges]);
+    console.log(currentStudent?.hasControl);
+    (CredentialsService.isHost || currentStudent?.hasControl) &&
+      emitWhiteboardChanges(board.toJSON());
+  }, [canUndo, canRedo, board, currentStudent, emitWhiteboardChanges]);
 
   return (
     <div className="whiteboard">

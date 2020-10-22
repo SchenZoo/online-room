@@ -148,7 +148,7 @@ const ClassRoomProvider: React.FC<Props> = (props) => {
 
   return (
     <ClassRoomContext.Provider
-      value={{ roomId, room, host, students, participants }}
+      value={{ roomId, room, host, students, participants, currentStudent }}
     >
       {room === undefined ? <Loader active /> : room && children}
     </ClassRoomContext.Provider>

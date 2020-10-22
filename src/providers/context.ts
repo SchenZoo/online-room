@@ -7,6 +7,7 @@ type ClassRoomContextProps = {
   host: Participant;
   students: Participant[];
   participants: Participant[];
+  currentStudent?: Participant;
 };
 
 export const ClassRoomContext = createContext<Partial<ClassRoomContextProps>>({
