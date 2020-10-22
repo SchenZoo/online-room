@@ -5,10 +5,9 @@ $button-height: 40px;
 .students {
   @include size(100%);
 
-  grid-row: 5;
-  padding-bottom: 12px;
   display: flex;
   flex-direction: column;
+  position: relative;
 
   .handraise {
     @include absolute(left 50% top 0);
@@ -18,7 +17,7 @@ $button-height: 40px;
     transition: transform 160ms;
     transition-delay: 100ms;
     transform: translate(-50%, -50%);
-    background: linear-gradient(180deg, rgba(#333, 0.5) 50%, transparent 50%);
+    background: linear-gradient(180deg, white 50%, transparent 50%);
     border-radius: 16px;
     > button {
       @include primary-circular-icon;
@@ -29,27 +28,9 @@ $button-height: 40px;
     }
   }
 
-  &__toggle {
-    @include button-reset;
-    @include font-size(14px, 16px);
-
-    flex: 0 0 $button-height;
-    color: white;
-    margin-left: 24px;
-    align-self: flex-start;
-
-    &:focus {
-      outline: none;
-    }
-
-    .chevron {
-      transition: transform 300ms;
-    }
-  }
-
   .student-list {
     flex: 1 1 100%;
-    padding: 0 28px;
+    padding: 25px;
     display: flex;
     align-items: center;
     overflow: auto;
@@ -93,7 +74,7 @@ $button-height: 40px;
 
     .student__item {
       flex: 0 0 var(--flexWidth);
-      filter: drop-shadow(2px 2px 28px rgba(28, 34, 79, 0.25));
+      filter: drop-shadow(2px 2px 5px rgba(28, 34, 79, 0.25));
 
       &:not(:hover) {
         .ui.dropdown:not(.visible) {
@@ -105,7 +86,7 @@ $button-height: 40px;
         @include absolute(top 5px right 0);
 
         z-index: 1;
-        
+
         > button {
           @include button-reset;
           @include size(24px);
@@ -118,23 +99,7 @@ $button-height: 40px;
     }
   }
 
-  .student {
-    position: relative;
-    height: 0;
-    padding-top: $padding-169; // 9/16
-    align-self: center;
-    pointer-events: all;
-    max-height: 100%;
-
-    video,
-    img {
-      @include absolute(top 0);
-      @include size(100%);
-      object-fit: cover;
-    }
-
-    @include user-camera-controls;
-
+  .vt-wrapper {
     .stream-controls {
       @include absolute(bottom 0 left 0 right 0);
 

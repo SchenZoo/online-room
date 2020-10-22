@@ -18,7 +18,7 @@
   }
 
   .stream-controls {
-    @include absolute(bottom 8px left 6px right 6px);
+    @include absolute(bottom 0 left 0);
     @include flex(row, space-between, center);
 
     color: white;

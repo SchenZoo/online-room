@@ -1,0 +1,157 @@
+@import '../../../../scss/settings';
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: rgba($color: white, $alpha: 0.8);
+
+  > header,
+  > footer {
+    flex: 0 0 48px;
+  }
+
+  > header {
+    @include flex(row, space-between, center);
+
+    box-shadow: 0px 2px 2px 0 rgba(black, 0.2);
+    padding: 0;
+
+    h2 {
+      margin: 0;
+      margin-left: 16px;
+      font-size: 20px;
+      color: $color-primary;
+    }
+
+    .icon-button {
+      margin-right: 8px;
+    }
+  }
+
+  > main {
+    position: relative;
+    flex: 1 1 100%;
+    overflow: auto;
+
+    .empty-state {
+      @include absolute(top 50% left 50%);
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      font-size: 14px;
+      color: gray;
+    }
+  }
+
+  > footer {
+    display: flex;
+    box-shadow: 0px -2px 2px 0 rgba(black, 0.2);
+    align-items: center;
+
+    // Background layer
+    > div:first-of-type {
+      @include size(100%);
+      position: relative;
+      border-bottom-left-radius: $border-radius;
+    }
+
+    > form {
+      width: 100%;
+      @include flex(row, center);
+
+      > div {
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        color: $color-gray-22;
+        padding-right: 16px;
+        background-color: white;
+        width: 90%;
+        border-radius: $border-radius;
+      }
+    }
+  }
+
+  &__messages {
+    display: flex;
+    flex-direction: column;
+
+    &:not(:empty) {
+      + .empty-state {
+        display: none;
+      }
+    }
+
+    > .message {
+      padding: 0.5rem 1rem;
+      font-size: 14px;
+      background-color: transparent;
+      margin: 4px 0;
+
+      p {
+        @include flex(column);
+
+        strong {
+          color: $color-gray-82;
+        }
+      }
+
+      .avatar {
+        @include size(40px);
+      }
+
+      &.mine {
+        @include flex(row);
+        align-self: flex-end;
+
+        p {
+          text-align: right;
+          margin-right: 8px;
+        }
+      }
+
+      &:not(.mine) {
+        @include flex(row);
+        align-self: flex-start;
+
+        .avatar {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  &__input {
+    font: inherit;
+    width: 100%;
+    border-radius: $border-radius;
+    background-color: white;
+    color: inherit;
+    resize: none;
+    overflow: hidden;
+    border: none;
+    margin: 0;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::-webkit-input-placeholder {
+      color: inherit;
+      opacity: 0.6;
+    }
+  }
+
+  &__actions {
+    margin-left: 8px;
+
+    .ui.button {
+      @include size(32px);
+      @include icon-pseudo-classes;
+      background-color: transparent;
+      border-radius: 50%;
+      padding: 8px;
+    }
+  }
+}

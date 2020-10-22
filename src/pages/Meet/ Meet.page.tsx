@@ -4,6 +4,9 @@ import ConferenceProvider from '../../providers/ConferenceProvider';
 import Students from './components/Students';
 import Host from './components/Host';
 import './Meet.styles.scss';
+import Whiteboard from './components/Whiteboard';
+import Header from './components/Header';
+import Chat from './components/Chat';
 
 interface Props {
   roomId: string;
@@ -14,8 +17,12 @@ const MeetPage = (props: Props) => {
     <ConferenceProvider>
       <ClassRoomProvider {...props}>
         <div className="meet">
-          {/* <Whiteboard /> */}
-          <Host />
+          <Header />
+          <Whiteboard />
+          <div className="right">
+            <Host />
+            <Chat />
+          </div>
           <Students />
         </div>
       </ClassRoomProvider>

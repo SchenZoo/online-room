@@ -90,6 +90,11 @@ const ClassRoomProvider: React.FC<Props> = (props) => {
       setHost(host);
     };
 
+    const onOvertakeChange = (data: { room: Room }) => {
+      const { room } = data;
+      setRoom(room);
+    };
+
     roomSocketService.addListener(
       SocketEventNames.ROOM_PARTICIPANT_JOINED,
       onUserJoinRoom,
@@ -102,6 +107,11 @@ const ClassRoomProvider: React.FC<Props> = (props) => {
     roomSocketService.addListener(
       SocketEventNames.ROOM_PARTICIPANT_CHANGED,
       onParticipantChange,
+    );
+
+    roomSocketService.addListener(
+      SocketEventNames.ROOM_OVERTAKING_CHANGED,
+      onOvertakeChange,
     );
 
     roomSocketService.addListener(
@@ -127,6 +137,11 @@ const ClassRoomProvider: React.FC<Props> = (props) => {
       roomSocketService.removeListener(
         SocketEventNames.ROOM_HOST_CHANGED,
         onHostChange,
+      );
+
+      roomSocketService.removeListener(
+        SocketEventNames.ROOM_OVERTAKING_CHANGED,
+        onOvertakeChange,
       );
     };
   }, [roomId, students, setStudents, addPeerConnection, removePeerConnection]);

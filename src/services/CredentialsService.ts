@@ -36,10 +36,10 @@ export default class CredentialsService {
   }
 
   public static get isHost() {
-    return CredentialsService.authBody.isHost;
+    return CredentialsService.authBody?.isHost;
   }
 
   public static get participant() {
-    return CredentialsService.authBody.participant;
+    return CredentialsService.authBody?.participant;
   }
 }

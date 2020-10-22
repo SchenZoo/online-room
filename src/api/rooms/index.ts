@@ -13,6 +13,18 @@ const updateRoomsCustomer = (
   );
 };
 
+const updateRoom = (roomId: string, patch: Partial<Room>) => {
+  return HttpClient.patch(`rooms/${roomId}`, patch);
+};
+
+const takeControl = (roomId: string, takeControl: boolean) => {
+  return HttpClient.post(`rooms/${roomId}/customers/take-control`, {
+    takeControl,
+  });
+};
+
 export default {
   updateRoomsCustomer,
+  updateRoom,
+  takeControl,
 };

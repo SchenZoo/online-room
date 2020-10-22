@@ -1,6 +1,7 @@
 import React, { useMemo, EventHandler, MouseEvent } from 'react';
 import { Popup } from 'semantic-ui-react';
 import CameraIcon from '../../../../../icons/Camera.icon';
+import PencilIcon from '../../../../../icons/Pencil.icon';
 import MicrophoneIcon from '../../../../../icons/Microphone.icon';
 export type StreamControlProps = Partial<{
   isAudioEnabled: boolean;

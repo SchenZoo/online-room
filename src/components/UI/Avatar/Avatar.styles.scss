@@ -1,0 +1,10 @@
+@import '../../../scss/settings';
+
+.avatar {
+  @include size(100%);
+  @include flex(row, center, center);
+
+  &--rounded {
+    border-radius: 50%;
+  }
+}

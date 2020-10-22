@@ -6,6 +6,7 @@ export type Participant = {
   token: string;
   hasJoined: boolean;
   hasControl?: boolean;
+  hasRequestedControl?: boolean;
   isAudioEnabled?: boolean;
   isVideoEnabled?: boolean;
 };
@@ -15,4 +16,5 @@ export type Room = {
   host: Participant;
   customers: Participant[];
   name: string;
+  allowOvertaking: boolean;
 };

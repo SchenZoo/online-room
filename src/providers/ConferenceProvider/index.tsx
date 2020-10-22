@@ -202,8 +202,6 @@ const ConferenceProvider: React.FC<Props> = (props) => {
         setIsVideoEnabled,
       }}
     >
-      <p>{!isAudioAvailable && 'Audio isnt enabled'}</p>
-      <p>{!isVideoAvailable && 'Video isnt enabled'}</p>
       {isMediaLoaded && children}
     </ConferenceContext.Provider>
   );

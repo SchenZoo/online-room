@@ -15,4 +15,7 @@ export default {
   ROOM_PARTICIPANT_JOINED: 'room-participant-joined',
   ROOM_PARTICIPANT_LEFT: 'room-participant-left',
   ROOM_HOST_CHANGED: 'room-host-changed',
+  ROOM_MESSAGE_CREATED: 'room-messagee-created',
+  WHITEBOARD_CHANGED: 'whiteboard-changed',
+  ROOM_OVERTAKING_CHANGED: 'room-overtaking-changed',
 } as const;

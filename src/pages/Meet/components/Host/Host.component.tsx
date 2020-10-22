@@ -17,7 +17,8 @@ const Host: React.FC<Props> = () => {
     <VideoTrack
       currentParticipant={host}
       isLocal={isHost}
-      stream={isHost ? localStream : streams[host.user._id]?.[0]}
+      stream={isHost ? localStream : streams[host?.user._id]?.[0]}
+      userType="host"
     />
   );
 };

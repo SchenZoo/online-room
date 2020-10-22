@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { ToolName } from '../../enums/Tools';
+import { WhiteboardState } from '../../Whiteboard.component';
 const { SketchField: SField } = require('react-sketch');
 
 type Props = Partial<{
@@ -69,7 +70,7 @@ export type SketchFieldRef = {
   copy: () => void;
   paste: () => void;
   clear: () => void;
-  toJSON: () => object;
+  toJSON: () => WhiteboardState;
 };
 
 const SketchField: React.ForwardRefRenderFunction<SketchFieldRef, Props> = (

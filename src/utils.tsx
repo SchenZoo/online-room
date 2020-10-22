@@ -1,3 +1,13 @@
+import React from 'react';
+import validDomains from './json/validDomains.json';
+
+const linkRegex = new RegExp(
+  `(https?://)?(www\\.)?[a-zA-Z0-9@:%._+~#=]{1,256}\\.(${validDomains.join(
+    '|',
+  )})+`,
+  'i',
+);
+
 function isTouchDevice(): boolean {
   const prefixes = ' -webkit- -moz- -o- -ms- '.split(' ');
   let mq = function (query: string) {
@@ -72,10 +82,57 @@ export function debounce(func: Function, wait: number, isImmediate = false) {
   };
 }
 
+export function linkify(text: string, newTab = true) {
+  if (!linkRegex.test(text)) return text;
+  return text
+    .split(' ')
+    .map((word) =>
+      linkRegex.test(word) ? (
+        <a
+          {...(newTab && { target: '_blank' })}
+          href={word.includes('http') ? word.trim() : `https://${word.trim()}`}
+        >
+          {word}
+        </a>
+      ) : (
+        word
+      ),
+    )
+    .reduce((acc, word) => (acc.length ? [...acc, ' ', word] : [word]), []);
+}
+
+export const convertObjToFormData = (
+  obj: Record<string, any>,
+  formData = new FormData(),
+  path = '',
+) => {
+  if (obj === undefined) return;
+
+  for (const prop in obj) {
+    const newPath = path ? `${path}[${prop}]` : prop;
+    if (typeof obj[prop] !== 'object') {
+      if (obj[prop] instanceof File) {
+        const file: File = obj[prop];
+        formData.append(newPath, file, file.name);
+      } else {
+        formData.append(newPath, obj[prop]);
+      }
+    } else if (obj[prop] === null) {
+      formData.append(newPath, obj[prop]);
+    } else {
+      convertObjToFormData(obj[prop], formData, newPath);
+    }
+  }
+
+  return formData;
+};
+
 export default {
   isTouchDevice,
   parseStringValue,
   ensureMediaPermissions,
   convertFormDataToJSONObject,
+  convertObjToFormData,
   debounce,
+  linkify,
 };

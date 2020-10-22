@@ -79,3 +79,13 @@ button {
     opacity: 0.3;
   }
 }
+
+.pencil {
+  #pen {
+    transform: scale(-1, 1) translateX(-100%);
+
+    + line {
+      stroke-width: 32px;
+    }
+  }
+}

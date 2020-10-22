@@ -20,16 +20,22 @@
   }
 }
 
-@mixin bg-linear {
-  background: linear-gradient(226.47deg, #7b358d 0%, #2e358d 97.56%);
-}
-
 @mixin primary-circular-icon {
   @include button-reset;
   @include size(32px);
-  @include bg-linear;
   @include flex(row, center, center);
 
   border-radius: 50%;
   color: white;
+  background-color: $color-primary;
+}
+
+@mixin icon-pseudo-classes {
+  &:hover {
+    background-color: #f0f0f0;
+  }
+
+  &:active {
+    background-color: #e0e0e0;
+  }
 }

@@ -8,11 +8,9 @@ import React, {
 } from 'react';
 import classNames from 'classnames';
 
-import { Dropdown } from 'semantic-ui-react';
 import ChevronRight from '../../../../icons/ChevronRight.icon';
 import Lowerhands from '../../../../icons/Lowerhands.icon';
 import Raisehands from '../../../../icons/Raisehands.icon';
-import Ellipsis from '../../../../icons/Ellipsis.icon';
 import CredentialsService from '../../../../services/CredentialsService';
 import useCallbackRef from '../../../../hooks/useCallbackRef';
 import utils from '../../../../utils';
@@ -23,10 +21,16 @@ import {
   ConferenceContext,
 } from '../../../../providers/context';
 import VideoTrack from '../../../../components/conference/VideoTrack';
+import { Participant } from '../../../../models/room';
+import api from 'api';
 
 type Props = {};
 const Students: React.FC<Props> = () => {
-  const { students, roomId } = useContext(ClassRoomContext);
+  const {
+    students,
+    roomId,
+    room: { allowOvertaking },
+  } = useContext(ClassRoomContext);
   const { streams, localStream } = useContext(ConferenceContext);
   const { isHost, participant: currentParticipant } = CredentialsService;
   const [participantsEl, participantsRef] = useCallbackRef<HTMLDivElement>();
@@ -38,8 +42,9 @@ const Students: React.FC<Props> = () => {
   const [showRaisedHands, setShowRaisedHands] = useState(!isHost);
 
   useEffect(() => {
-    if (participantsEl)
-      setMaxWidth((16 / 9) * (participantsEl.clientHeight - 8));
+    if (participantsEl) {
+      setMaxWidth((16 / 9) * (participantsEl.clientHeight - 50));
+    }
   }, [participantsEl]);
 
   useEffect(() => {
@@ -79,53 +84,33 @@ const Students: React.FC<Props> = () => {
   const classes = classNames(['students']);
 
   const joinedParticipants = useMemo(
-    () =>
-      students
-        .filter((p) => p.hasJoined)
-        .sort((p1, p2) => {
-          // if p1 is current or he raised hand he has lower index so it returns -1
-          if (p1.user._id === CredentialsService.userid || p1.hasControl)
-            return -1;
-          // if p2 is current or he raised hand he has lower index so must returns 1
-          if (p2.user._id === CredentialsService.userid || p2.hasControl)
-            return 1;
-          return 0;
-        }),
+    () => students.filter((p) => p.hasJoined),
     [students],
   );
 
-  // useEffect(() => {
-  //   setShowRaisedHands(!(isHost || currentParticipant.hasRaisedHand));
-  // }, [isHost, currentParticipant]);
+  useEffect(() => {
+    setShowRaisedHands(
+      isHost ? allowOvertaking : !currentParticipant.hasRequestedControl,
+    );
+  }, [isHost, allowOvertaking, currentParticipant]);
 
-  // const handleHandRaiseClick = useCallback(() => {
-  //   if (isHost) {
-  //     api.experience.participants.editAll(roomId, {
-  //       hasRaisedHand: false,
-  //       isAudioEnabled: false,
-  //     });
-  //     return;
-  //   }
-
-  //   if (currentParticipant) {
-  //     setShowRaisedHands(currentParticipant.hasRaisedHand);
-  //     api.experience.participants.edit(roomId, currentParticipant._id, {
-  //       hasRaisedHand: !currentParticipant.hasRaisedHand,
-  //     });
-  //   }
-  // }, [isHost, roomId, currentParticipant]);
+  const handleHandRaiseClick = useCallback(() => {
+    if (isHost) {
+      api.rooms.updateRoom(roomId, {
+        allowOvertaking: !allowOvertaking,
+      });
+    } else {
+      api.rooms.takeControl(roomId, !currentParticipant.hasControl);
+    }
+  }, [isHost, roomId, allowOvertaking, currentParticipant.hasControl]);
 
   return (
     <>
       <div className={classes}>
         <div className="handraise">
           <button
-          // disabled={
-          //   isHost &&
-          //   (!joinedParticipants.length ||
-          //     !joinedParticipants[0].hasRaisedHand)
-          // }
-          // onClick={handleHandRaiseClick}
+            onClick={handleHandRaiseClick}
+            disabled={!isHost && !allowOvertaking}
           >
             {!showRaisedHands ? <Lowerhands /> : <Raisehands />}
           </button>
@@ -155,31 +140,15 @@ const Students: React.FC<Props> = () => {
           </style>
           {joinedParticipants.map((participant, ind) => (
             <div className="student__item" key={ind}>
-              {isHost && (
-                <Dropdown
-                  className="student__context-menu"
-                  icon={null}
-                  lazyLoad
-                  trigger={
-                    <button>
-                      <Ellipsis />
-                    </button>
-                  }
-                >
-                  <Dropdown.Menu className="left">
-                    <Dropdown.Item>Warn user</Dropdown.Item>
-                    <Dropdown.Item> Kick User</Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
-              )}
               <VideoTrack
                 currentParticipant={participant}
-                isLocal={participant.user._id === currentParticipant.user._id}
+                isLocal={participant.user._id === currentParticipant?.user._id}
                 stream={
-                  participant.user._id === currentParticipant.user._id
+                  participant.user._id === currentParticipant?.user._id
                     ? localStream
                     : streams[participant.user._id]?.[0]
                 }
+                userType="student"
               />
             </div>
           ))}

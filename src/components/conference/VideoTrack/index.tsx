@@ -14,18 +14,26 @@ interface VideoTrackProps {
   currentParticipant: Participant;
   stream: MediaStream;
   isLocal: boolean;
+  userType: 'host' | 'student';
 }
 
 const VideoTrack: React.FC<VideoTrackProps> = ({
   stream,
   currentParticipant,
   isLocal,
+  userType,
 }) => {
   const { roomId } = useContext(ClassRoomContext);
   const { isHost } = CredentialsService;
-  const lastAudioEnabled = useRef(currentParticipant.isAudioEnabled);
+  const lastAudioEnabled = useRef(currentParticipant?.isAudioEnabled);
   const [audioRef, setAudioRef] = useCallbackRef<HTMLVideoElement>();
   const [videoRef, setVideoRef] = useCallbackRef<HTMLVideoElement>();
+  const { user: { name } = { name: 'Some name' } } = currentParticipant || {};
+
+  const videoDescription = useMemo(
+    () => (userType === 'host' ? `Professor: ${name}` : `${name}`),
+    [name, userType],
+  );
 
   const audioStream = useMemo(() => {
     if (!stream || currentParticipant.isAudioEnabled === false) return null;
@@ -108,7 +116,7 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
         });
       };
 
-      const safeExperienceParticipant = {
+      const safeParticipant = {
         isAudioEnabled: true,
         isVideoEnabled: true,
         hasControl: false,
@@ -116,8 +124,8 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
       };
 
       streamControlProps = {
-        isVideoEnabled: safeExperienceParticipant.isVideoEnabled,
-        isAudioEnabled: safeExperienceParticipant.isAudioEnabled,
+        isVideoEnabled: safeParticipant.isVideoEnabled,
+        isAudioEnabled: safeParticipant.isAudioEnabled,
       };
 
       if (isHost) {
@@ -139,14 +147,21 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
 
     return (
       <div className="stream-controls">
+        {videoDescription && <span>{videoDescription}</span>}
         {showControls && <StreamControls {...streamControlProps} />}
       </div>
     );
-  }, [showControls, isLocal, currentParticipant, isHost, roomId]);
+  }, [
+    showControls,
+    videoDescription,
+    currentParticipant,
+    isHost,
+    roomId,
+    isLocal,
+  ]);
 
   const participantStatus = useMemo(() => {
     if (!currentParticipant) return 'muted';
-    return 'muted';
     if (currentParticipant.isAudioEnabled) {
       return 'talking';
     }
@@ -186,7 +201,7 @@ const VideoTrack: React.FC<VideoTrackProps> = ({
           poster="/assets/gifs/loading.gif"
         />
       ) : (
-        <img alt={'Camera off'} />
+        <img src="/assets/images/logo.png" alt={'Camera off'} />
       )}
       {controls}
     </div>
