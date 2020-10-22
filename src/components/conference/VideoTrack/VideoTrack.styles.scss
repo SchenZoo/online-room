@@ -1,0 +1,92 @@
+@import '../../../scss/settings';
+
+.vt-wrapper {
+  @include size(100%);
+}
+
+video {
+  &.user-stream {
+    @include size(360px, 220px);
+
+    object-fit: cover;
+    transition-property: border-radius, transform;
+    transition-duration: 300ms;
+  }
+}
+
+.user-stream--mirrored {
+  transform-origin: top left;
+  transform: scale(-1, 1) translateX(-100%);
+}
+
+.video__controls {
+  z-index: 0;
+  pointer-events: auto;
+}
+
+.controls {
+  @include size(36px, 32px);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  color: white;
+  justify-content: center;
+  width: 100%;
+}
+
+.stream-controls {
+  > span {
+    background-image: linear-gradient(226.47deg, #7b358d 0%, #2e358d 97.56%);
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+
+    button {
+      @include button-reset;
+      @include size(20px);
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      + button {
+        margin-left: 8px;
+      }
+    }
+  }
+}
+
+.hand-raise {
+  &::before {
+    background-color: $color-hand-raise;
+    animation: blink 1000ms infinite alternate ease;
+  }
+
+  &--accepted {
+    &::before {
+      background-color: $color-hand-raise-acc;
+    }
+  }
+
+  &,
+  &--accepted {
+    &::before {
+      @include absolute(0);
+
+      content: '';
+      transform: scale(1.04, 1.07);
+      border-radius: 8px;
+    }
+  }
+}
+
+@keyframes blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

@@ -1,6 +1,5 @@
 import React from 'react';
 import LocalVideo from '../../components/conference/LocalVideo';
-import Whiteboard from '../../components/UI/Whiteboard';
 import ClassRoomProvider from '../../providers/ClassRoomProvider';
 import ConferenceProvider from '../../providers/ConferenceProvider';
 import Students from './components/Students';
@@ -15,7 +14,7 @@ const MeetPage = (props: Props) => {
     <ConferenceProvider>
       <ClassRoomProvider {...props}>
         <div className="meet">
-          <Whiteboard />
+          {/* <Whiteboard /> */}
           <LocalVideo />
           <Students />
         </div>
